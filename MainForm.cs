@@ -923,7 +923,7 @@ namespace SuperSteamPacker
                                 }
                                 else
                                 {
-                                    Compress.StartInfo.Arguments = "a -mx9 -sdel -pcs.rin.ru -mhe=on -v5g ..\\Completed\\" + GameName + ".Build." + BuildNo + "." + OS + "." + workarray[2] + ".7z *";
+                                    Compress.StartInfo.Arguments = "a -mx9 -sdel -v5g ..\\Completed\\" + GameName + ".Build." + BuildNo + "." + OS + "." + workarray[2] + ".7z *";
                                 }
 
                             }
@@ -1924,7 +1924,7 @@ namespace SuperSteamPacker
                                 }
                                 else
                                 {
-                                    Compress.StartInfo.Arguments = "a -mx9 -sdel -pcs.rin.ru -mhe=on -v5g ..\\Completed\\Workshop_" + AppID + "_" + WorkshopID + ".7z *";
+                                    Compress.StartInfo.Arguments = "a -mx9 -sdel -v5g ..\\Completed\\Workshop_" + AppID + "_" + WorkshopID + ".7z *";
                                 }
 
                             }
