@@ -1,0 +1,61 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Триггерится на теги вида v1.0.0, v2.1.3 и т.д.
+
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.3
+      
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      
+    - name: Restore NuGet packages
+      run: nuget restore SuperSteamPacker.sln
+      
+    - name: Build solution
+      run: msbuild SuperSteamPacker.sln /p:Configuration=Release /p:Platform="Any CPU"
+      
+    - name: Create release archive
+      run: |
+        mkdir release
+        copy bin\Release\SuperSteamPacker.exe release\
+        copy bin\Release\*.dll release\
+        copy bin\Release\*.config release\
+        copy Resources\* release\ 2>nul || echo "No resources to copy"
+        powershell Compress-Archive -Path release\* -DestinationPath SuperSteamPacker-${{ github.ref_name }}.zip
+      
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          SuperSteamPacker-${{ github.ref_name }}.zip
+          bin/Release/SuperSteamPacker.exe
+        draft: false
+        prerelease: false
+        name: SuperSteamPacker ${{ github.ref_name }}
+        body: |
+          ## Changes in ${{ github.ref_name }}
+          
+          ### 🚀 Features
+          - Removed password protection from 7z archives
+          
+          ### 📦 Downloads
+          - **SuperSteamPacker.exe** - Standalone executable
+          - **SuperSteamPacker-${{ github.ref_name }}.zip** - Full package with dependencies
+          
+          ### 📋 Requirements
+          - Windows 7 or later
+          - .NET Framework 4.8
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
