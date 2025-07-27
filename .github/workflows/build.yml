@@ -40,4 +40,54 @@ jobs:
       with:
         name: SuperSteamPacker-exe-${{ github.sha }}
         path: bin/Release/SuperSteamPacker.exe
-        retention-days: 90 
+        retention-days: 90
+
+    # Автоматическое создание релиза только при push в main (не PR)
+    - name: Create automatic release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        mkdir release-package
+        copy bin\Release\SuperSteamPacker.exe release-package\
+        copy bin\Release\*.dll release-package\
+        copy bin\Release\*.config release-package\
+        powershell Compress-Archive -Path release-package\* -DestinationPath SuperSteamPacker-auto-${{ github.run_number }}.zip
+      
+    - name: Generate release tag
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      id: release_tag
+      run: |
+        $date = Get-Date -Format "yyyy.MM.dd"
+        $tag = "auto-v$date-build${{ github.run_number }}"
+        echo "tag=$tag" >> $env:GITHUB_OUTPUT
+        echo "Generated tag: $tag"
+      
+    - name: Create GitHub Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.release_tag.outputs.tag }}
+        name: "SuperSteamPacker Auto-Build #${{ github.run_number }}"
+        files: |
+          SuperSteamPacker-auto-${{ github.run_number }}.zip
+          bin/Release/SuperSteamPacker.exe
+        draft: false
+        prerelease: false
+        body: |
+          ## 🤖 Automatic Build #${{ github.run_number }}
+          
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+          **Commit:** ${{ github.sha }}
+          **Message:** ${{ github.event.head_commit.message }}
+          
+          ### 📦 Downloads
+          - **SuperSteamPacker.exe** - Standalone executable  
+          - **SuperSteamPacker-auto-${{ github.run_number }}.zip** - Full package with dependencies
+          
+          ### 🔄 Changes
+          ${{ github.event.head_commit.message }}
+          
+          ---
+          *This is an automatic release created from the latest main branch.*
+        generate_release_notes: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
